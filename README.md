@@ -1,4 +1,4 @@
-# Copilot Key Toggle — MSI 15 B12UC
+# b12uc-autopilot Copilot Key Toggle — MSI 15 B12UC
 
 Turns the useless "Copilot" key on an MSI 15 B12UC into a 3-way power/performance switcher, using [AutoHotkey](https://www.autohotkey.com/) + [ThrottleStop](https://www.techpowerup.com/download/techpowerup-throttlestop/) + [NVIDIA Profile Inspector](https://github.com/Orbmu2k/nvidiaProfileInspector).
 
