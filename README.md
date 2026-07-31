@@ -2,7 +2,7 @@
 
 Turns the useless "Copilot" key on an MSI 15 B12UC into a 3-way power/performance switcher, using [AutoHotkey](https://www.autohotkey.com/) + [ThrottleStop](https://www.techpowerup.com/download/techpowerup-throttlestop/) + [NVIDIA Profile Inspector](https://github.com/Orbmu2k/nvidiaProfileInspector).
 
-> Built by one person, on their own time, for their own (slightly modified) B12UC. Not a corporate QA'd tool , read the [Disclaimer](#disclaimer) before you dive in. Dropped idle temps from **70°C → 52°C** in Perf mode on my machine , your temps will vary.
+> Built by one person, on their own time, for their own (slightly modified) B12UC. Not a corporate QA'd tool , read the [Disclaimer](#disclaimer) before you dive in. Dropped idle temps from **70°C → 52°C** in Perf mode on my machine , your temps will vary. Will not make a linux one, you can try if you want.
 
 ![Platform](https://img.shields.io/badge/platform-Windows-blue)
 ![AutoHotkey](https://img.shields.io/badge/AutoHotkey-v2-green)
