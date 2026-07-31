@@ -8,6 +8,7 @@ Turns the useless "Copilot" key on an MSI 15 B12UC into a 3-way power/performanc
 ![AutoHotkey](https://img.shields.io/badge/AutoHotkey-v2-green)
 ![Status](https://img.shields.io/badge/status-personal%20project-yellow)
 ![Version](https://img.shields.io/badge/version-1.3.0-orange)
+![License](https://img.shields.io/badge/license-MIT-blue)
 
 > **Important, before you touch anything:** every path in the script and in this guide uses the literal text `place holder` instead of a real username. Do a **Ctrl+F** (or Find & Replace) for `place holder` in `CopilotThrottleStopToggle.ahk` or my own config files in the .rar, and swap it for your own Windows username, that's it, that's the only thing that has to change to make this yours. Everything else below explains why and where. But i kindly advise to make the config files yourself, it will suit better your own laptop.
 
