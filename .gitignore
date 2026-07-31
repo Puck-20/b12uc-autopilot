@@ -1,0 +1,14 @@
+# Logs and state files
+*.log
+*.log.old
+ts_profile_state.txt
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
