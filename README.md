@@ -276,7 +276,7 @@ Set via MSI Center's custom fan curve editor:
 | 5 | 60% |
 | 6 | 110% | 
 
-Tuned alongside a phase-change thermal pad, results will differ with stock thermal paste/pad. (150% dont changes the temp that much tbh)
+Tuned alongside a phase-change thermal pad, results will differ with stock thermal paste/pad. (150% doesn't change the temp that much tbh)
 
 ---
 
