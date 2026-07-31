@@ -1,5 +1,5 @@
 ============================================================
- COPILOT KEY TOGGLE -- COMPLETE BEGINNER SETUP GUIDE (v1.2)
+ COPILOT KEY TOGGLE -- COMPLETE BEGINNER SETUP GUIDE (v1.3)
 ============================================================
 
 This guide assumes you are starting from a brand new / freshly reset
@@ -15,6 +15,10 @@ heads up i did not fool proof everything, tried but i think i left some files un
 * made a custom fan curve in msi center still in PROGRESS and testing with the modes, but good result (if you use phase changing thermal pad)  1: 0%,  2: 25%,  3: 38%,  4: 44%,  5: 60%,  6: 150% *
 (custom made for me, and decibel to temp ratio (still for my liking)i don't say that this is the best fan curve just putting a base line with this project)
 
+also, first time actually using github for me so bear with anything that looks off structurally. and honestly you don't need to follow this guide 100%, paths, which app opens in which mode, refresh rates, muting the speakers, change whatever fits your setup better than mine, this is just how i did it on my machine.
+
+use at your own risk basically, this pokes at CPU/GPU power behavior and display settings through a bunch of different tools, i'm not responsible for what happens on your specific hardware/software combo, test each piece by hand before trusting the automation.
+
 
 
 WHAT THIS PROJECT DOES, IN PLAIN WORDS:
@@ -26,7 +30,8 @@ instead it switches your laptop between 3 power/performance modes:
   GAME  - full power, fans can spin up, best for gaming
   PERF  - CPU turbo off, quieter/cooler, still full 144Hz screen
   WORK  - CPU downclocked, screen dropped to 60Hz, speakers muted,
-          MSI Center opens to manual switch user scenario -- meant for office work / browsing
+          GPU clocks pulled back too, Windows Energy Saver forced on,
+          MSI Center opens automatically -- meant for office work / browsing
 
   TAP the Copilot key once   -> switches between GAME and PERF
   HOLD the Copilot key for a full second -> jumps to WORK mode
@@ -34,10 +39,11 @@ instead it switches your laptop between 3 power/performance modes:
 A small popup box appears in the corner of your screen every time you
 switch, telling you which mode you're now in.
 
-This is done with 3 pieces of software working together:
+This is done with 4 pieces of software working together:
   1. AutoHotkey  -- runs the actual script that listens for the key
   2. ThrottleStop -- controls the CPU (turbo on/off, downclocking)
   3. NVIDIA Profile Inspector -- controls the GPU's power behaviour
+  4. MSI Afterburner -- pulls back the GPU's actual clock speed in Work mode
 
 
 ------------------------------------------------------------
@@ -74,9 +80,10 @@ Install these one at a time, in this order.
       this already installed. If it's missing, search "MSI Center"
       on MSI's official support site for your model and install it.
 
-  1e. MSI Afterburner (OPTIONAL -- skip this if you just want the
-      basic 3-mode toggle. This is only needed if you later want to
-      also underclock the GPU core/memory speed in Work mode.)
+  1e. MSI Afterburner (REQUIRED now -- used for the GPU core/memory
+      clock offset in Work mode. It only auto-launches when you
+      switch to Work mode though, it won't pop open uninvited during
+      Game/Perf switches if you keep it closed.)
       Go to: https://www.msi.com/Landing/afterburner/graphics-cards
       This one DOES have a normal installer, just run it and follow
       the prompts.
@@ -308,6 +315,38 @@ making it switchable with one click instead of digging through menus.
 
 
 ------------------------------------------------------------
+STEP 4B -- SET UP MSI AFTERBURNER GPU CLOCK PROFILES
+------------------------------------------------------------
+
+This one's required now too (wasn't when this project first started,
+but Work mode uses it to actually pull the GPU clocks down).
+
+  1. Open MSI Afterburner.
+  2. Try dragging the Core (MHz) slider a little. If it actually
+     moves and you can click the green checkmark to Apply, good,
+     you have control over this. (Voltage and Power Limit are
+     usually locked by MSI on laptops, that's normal, ignore those,
+     we only need Core/Memory to work.)
+  3. With both Core and Memory sliders at +0 (default), click User
+     Profile "1" (top right area), then click Save. This is your
+     Game/Perf profile, full clocks.
+  4. Now drag Core (MHz) down to around -300. Don't go more
+     aggressive than that on your first try, bigger negative numbers
+     risk a driver crash if the GPU gets pushed hard while capped.
+     Click Apply, then go play something demanding for a few minutes
+     to make sure it's stable (a quiet menu screen won't tell you
+     anything, actual gameplay will).
+  5. If that was stable, click User Profile "2", then Save. This is
+     your Work profile, downclocked.
+
+  Heads up: the script only auto-opens Afterburner when you switch
+  to Work mode. If you're in Game or Perf and Afterburner happens to
+  be closed, the script just skips it rather than popping it open on
+  every single tap, so don't be surprised if it doesn't launch just
+  from a quick Game/Perf toggle, that's intentional.
+
+
+------------------------------------------------------------
 STEP 5 -- EDIT THE SCRIPT'S PATHS
 ------------------------------------------------------------
 
@@ -319,16 +358,35 @@ like this:
   NVI_PATH  := "C:\Users\place holder\app\nvidiaprofileinspec\nvidiaProfileInspector.exe"
   NIP_GAME  := "C:\Users\place holder\app\nvidiaprofileinspec\global_profile_game.nip"
   NIP_PERF  := "C:\Users\place holder\app\nvidiaprofileinspec\global_profile_perf.nip"
-  MSI_CENTER_PATH := "C:\Program Files\MSI Center\MSI Center.exe"
+  AB_PATH   := "C:\Program Files (x86)\MSI Afterburner\MSIAfterburner.exe"
+  MSI_CENTER_APPID := "9426MICRO-STARINTERNATION.MSICenter_kzh8wxbdkxb8p!App"
 
-Change "place holder" to your own actual Windows username in all four lines
-if it's different. To find your username: open File Explorer, your
+Change "place holder" to your own actual Windows username in the
+first four lines. To find your username: open File Explorer, your
 personal folder under "This PC > Local Disk (C:) > Users" shows it.
 
-For the MSI_CENTER_PATH line: find your MSI Center icon (Start Menu
-or Desktop), right-click it, choose "Open file location", right-click
-the .exe you land on, choose Properties, and copy the exact "Target"
-path shown there into that line, keeping the quote marks.
+For AB_PATH: right-click your Afterburner shortcut, "Open file
+location", copy the real path, it can vary by install.
+
+For MSI_CENTER_APPID: this one is NOT a normal file path. MSI Center
+is often installed as a packaged Windows app on newer machines
+(can't right-click it and "Open file location" like a normal exe).
+Open PowerShell and run:
+
+  Get-StartApps | Where-Object {$_.Name -like "*MSI Center*"}
+
+It'll print something like:
+  Name        AppID
+  ----        -----
+  MSI Center  MSIElectronic.MSICentre_xxxxxxxxxxxxx!App
+
+Copy the AppID value it gives you (yours will be different from the
+example above, that's normal) and paste it into MSI_CENTER_APPID,
+keeping the quote marks. If your MSI Center install turns out to be
+a normal exe instead, you can swap that whole line for a plain path
+and change the launch code to a regular Run() call, check toggle.log
+if you're not sure which case you're in, a failed launch attempt
+gets logged there either way.
 
 Save the file when done (Ctrl + S), then close Notepad.
 
@@ -431,6 +489,17 @@ TROUBLESHOOTING
   is broken -- everything else (CPU/GPU/mute/MSI Center) will still
   work correctly.
 
+- Afterburner clocks don't seem to change in Game/Perf:
+  That's expected now if Afterburner was closed, it only auto-opens
+  for Work mode, Game/Perf will only apply the clock offset if
+  Afterburner's already running. Open it yourself first if you want
+  it active during Game/Perf too.
+
+- Energy Saver doesn't seem to turn on in Work mode:
+  Known limitation, it reliably works while on battery but hasn't
+  been confirmed working the same way while plugged into AC power.
+  See the Known Issues section in README.md for details.
+
 
 ------------------------------------------------------------
 NOTES FOR LATER
@@ -441,15 +510,24 @@ NOTES FOR LATER
   were last in, so the popup stays accurate even after a restart.
   Don't delete it.
 
-- MSI Afterburner is not connected to the script yet. If you finish
-  setting up a Profile 1 (+0 offset) and Profile 2 (negative offset,
-  e.g. Core -300) inside Afterburner later, you can add GPU
-  underclocking to Work mode by adding this one line inside the
-  ApplyProfile() function in the script:
+- toggle.log also appears automatically. It only writes a line when
+  something actually FAILS (a launch, the refresh rate change, etc),
+  not on every switch, so an empty or short log is a good sign. It
+  auto-rotates to toggle.log.old once it passes about 500KB, so it
+  won't grow forever.
 
-    Run('"C:\Program Files (x86)\MSI Afterburner\MSIAfterburner.exe" -profile2',, "Hide")
+- MSI Afterburner is connected now. It only auto-launches in Work
+  mode though, Game/Perf switches will apply the offset if
+  Afterburner's already running, but won't pop it open if it's
+  closed.
 
-- If MSI Center ever updates and moves its install location, just
-  redo the path-finding part of step 5 for MSI_CENTER_PATH.
+- If MSI Center ever updates and its AppID changes, re-run the
+  PowerShell command from step 5 to get the new one and update
+  MSI_CENTER_APPID in the script.
+
+- Don't feel locked into following every step exactly as written.
+  Paths, which apps launch in which mode, the refresh rates, whether
+  the speakers mute, all of that is just how I set mine up, change
+  whatever fits your own machine and habits.
 
 (keep in mind all of this is made by one person on their free time, made that for me but wanted to help other people with this laptop, if there is any problem with the project or something you want changed or updated tell me or you can try your self. it was really fun for me honestly)
