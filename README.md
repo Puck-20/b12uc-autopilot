@@ -35,7 +35,7 @@ this was **built for fun** and to hopefully **save someone else the trial and er
 
 A small rounded popup appears in the top-right corner every time you switch, confirming the active mode, and it's timed to show up **before** the screen actually changes.
 
-# Demo, switching into Work mode
+# Demo, switching into Work mode (gif a bit to fast)
 ![Demo of mode switching](media/work_mode_demo.gif)
 
 > throttleStop : disable turbo, put power saver, and EPP speed at 200.
