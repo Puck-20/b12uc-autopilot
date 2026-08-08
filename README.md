@@ -7,10 +7,10 @@ Turns the useless "Copilot" key on an MSI 15 B12UC into a 3-way power/performanc
 ![Platform](https://img.shields.io/badge/platform-Windows-blue)
 ![AutoHotkey](https://img.shields.io/badge/AutoHotkey-v2-green)
 ![Status](https://img.shields.io/badge/status-personal%20project-yellow)
-![Version](https://img.shields.io/badge/version-1.3.0-orange)
+![Version](https://img.shields.io/badge/version-1.4.0-orange)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
-> **Important, before you touch anything:** every path in the script and in this guide uses the literal text `place holder` instead of a real username. Do a **Ctrl+F** (or Find & Replace) for `place holder` in `CopilotThrottleStopToggle.ahk` or my own config files in the .rar, and swap it for your own Windows username, that's it, that's the only thing that has to change to make this yours. Everything else below explains why and where. But i kindly advise to make the config files yourself, it will suit better your own laptop.
+> **Important, before you touch anything:** as of v1.4.0 you shouldn't need to hand-edit any paths, on first run the script pops up two small boxes asking for your Windows username and the folder name your tools live in (pre-filled with sensible guesses), then saves your answer straight into `config.ahk` for you, you won't be asked again. All your user-specific paths live in `config.ahk` now, not in the main script, and still default to the literal text `place holder` until the wizard (or you) fills it in. Prefer skipping the wizard? Do a **Ctrl+F** (or Find & Replace) for `place holder` in `config.ahk`, and swap it for your own Windows username, that's it, that's the only thing that has to change to make this yours. Everything else below explains why and where. But i kindly advise letting the wizard do it, or making the config file yourself, it will suit better your own laptop.
 
 > Also check out the **full beginner readme**, might suit some people better, and if you want to use ai copy the quickstart one (and read it a bit) and copy the other one.
 **This .md is mostly to have a good looking github page**, you can switch between both the md and the txt readmes if you want to fully understand how i made this work.
@@ -26,6 +26,8 @@ this was **built for fun** and to hopefully **save someone else the trial and er
 |---|---|
 | **Tap** the Copilot key | Toggles **GAME** ↔ **PERF** |
 | **Hold** the Copilot key for 1 second | Switches to **WORK** mode (fires the instant 1s hits, doesn't wait for you to release) |
+| **Right-click the tray icon** | Manually force GAME / PERF / WORK, a fallback if the physical key ever gets remapped or misbehaves (new in v1.4.0) |
+| `Ctrl+Alt+F9` | Pause / resume the whole script |
 
 | Mode | CPU | GPU clocks | Screen | Extra |
 |---|---|---|---|---|
@@ -33,7 +35,7 @@ this was **built for fun** and to hopefully **save someone else the trial and er
 | PERF | Turbo OFF | Afterburner +0 offset | 144Hz | quieter/cooler, still gaming-refresh screen |
 | WORK | Turbo OFF + Power Saver | Afterburner -300 offset, auto-launches Afterburner if it's closed | 60Hz | speakers muted, MSI Center opens, Windows Energy Saver forced on |
 
-A small rounded popup appears in the top-right corner every time you switch, confirming the active mode, and it's timed to show up **before** the screen actually changes.
+A small rounded popup appears in the top-right corner every time you switch, confirming the active mode, and it's timed to show up **before** the screen actually changes. (v1.4.0 also fixed a bug where two quick taps could leave two of these popups stacked on screen at once.)
 
 # Demo, switching into Work mode (gif a bit to fast)
 ![Demo of mode switching](media/work_mode_demo.gif)
@@ -55,6 +57,7 @@ A small rounded popup appears in the top-right corner every time you switch, con
   - [3. ThrottleStop profiles](#3-throttlestop-profiles)
   - [4. NVIDIA GPU profiles](#4-nvidia-gpu-profiles)
   - [5. Edit script paths](#5-edit-script-paths)
+    - [Feature toggles](#feature-toggles)
   - [6. Autostart (Scheduled Tasks)](#6-autostart-scheduled-tasks)
   - [7. Test](#7-test)
 - [What each ThrottleStop setting does](#what-each-throttlestop-setting-does)
@@ -81,6 +84,8 @@ A small rounded popup appears in the top-right corner every time you switch, con
 
 > ⚠️ **Do not install NirCmd.** An earlier version of this project used it for refresh-rate switching, it's no longer needed (refresh rate is done via a direct Windows API call in the script) and a VirusTotal scan flagged it as suspicious.
 
+Don't have every tool above? Each one can be switched off individually now, see [Feature toggles](#feature-toggles) below.
+
 ---
 
 ## Folder structure
@@ -90,6 +95,7 @@ Everything lives in one folder, name and location are up to you, just keep the s
 ```
 app/
 ├── CopilotThrottleStopToggle.ahk
+├── config.ahk                        # all your paths + toggles live here now, edit this not the main script
 ├── ts_profile_state.txt              # auto-created on first run, leave it alone
 ├── toggle.log                        # auto-created, only writes on failures, leave it alone
 ├── ThrottleStop.exe
@@ -116,7 +122,7 @@ Install in this order: AutoHotkey v2 → ThrottleStop → NVIDIA Profile Inspect
 C:\Users\place holder\app\
 ```
 
-Save `CopilotThrottleStopToggle.ahk` directly into it. (Can be named anything or put anywhere, just make sure every path in the script points at wherever you actually put it.)
+Save `CopilotThrottleStopToggle.ahk` **and** `config.ahk` directly into it, they must sit together. (Can be named anything or put anywhere, just make sure every path in `config.ahk` points at wherever you actually put it.)
 
 ### 3. ThrottleStop profiles
 
@@ -136,7 +142,7 @@ Assign hotkeys under **Options → Hotkeys** (tick **NUMPAD**, keep NumLock ON):
 | 2 (Game) | `Ctrl + Alt + Numpad 1` |
 | 4 (Work) | `Ctrl + Alt + Numpad 3` |
 
-These must exactly match `HK_PERF` / `HK_GAME` / `HK_WORK` in the script. Once saved, ThrottleStop writes a `ThrottleStop.ini` next to its exe, back that file up so you never have to redo this from scratch.
+These must exactly match `HK_PERF` / `HK_GAME` / `HK_WORK` in `config.ahk`. Once saved, ThrottleStop writes a `ThrottleStop.ini` next to its exe, back that file up so you never have to redo this from scratch.
 
 ### 4. NVIDIA GPU profiles
 
@@ -153,17 +159,24 @@ Also set up **two Afterburner profiles** while you're at it: Profile 1 with a `+
 
 ### 5. Edit script paths
 
-Open `CopilotThrottleStopToggle.ahk` and update every `place holder`:
+Since v1.4.0, run `CopilotThrottleStopToggle.ahk` once (as admin) and let the **first-run wizard** handle the two path-defining values, a small popup asks for your Windows username and the folder name your tools live in (pre-filled with sensible guesses), confirm or edit, and it saves the answer straight into `config.ahk` for you.
+
+Prefer to skip the wizard, or it got cancelled and you'd rather not see it again? Open `config.ahk` and edit these two lines yourself:
 
 ```ahk
-TS_PATH   := "C:\Users\place holder\app\ThrottleStop.exe"
-NVI_PATH  := "C:\Users\place holder\app\nvidiaprofileinspec\nvidiaProfileInspector.exe"
-NIP_GAME  := "C:\Users\place holder\app\nvidiaprofileinspec\global_profile_game.nip"
-NIP_PERF  := "C:\Users\place holder\app\nvidiaprofileinspec\global_profile_perf.nip"
-AB_PATH   := "C:\Program Files (x86)\MSI Afterburner\MSIAfterburner.exe"
+WIN_USERNAME     := "place holder"
+APPS_FOLDER_NAME := "app"
 ```
 
-Change `place holder` to your own actual Windows username in the four lines above. To find your username: open File Explorer, your personal folder under **This PC → Local Disk (C:) → Users** shows it. Confirm `AB_PATH` matches where Afterburner actually installed on your machine (right-click its shortcut → **Open file location**).
+Everything else, `TS_PATH`, `NVI_PATH`, `NIP_GAME`, `NIP_PERF`, gets built automatically from those two. To find your username: open File Explorer, your personal folder under **This PC → Local Disk (C:) → Users** shows it.
+
+Two paths still need manual editing regardless, the wizard doesn't touch these:
+
+```ahk
+AB_PATH := "C:\Program Files (x86)\MSI Afterburner\MSIAfterburner.exe"
+```
+
+Confirm `AB_PATH` matches where Afterburner actually installed on your machine (right-click its shortcut → **Open file location**).
 
 `MSI_CENTER_APPID` is different, it's not a normal file path. On newer machines MSI Center is a packaged Windows app, not a regular exe, so you can't just point at an install folder. Open PowerShell and run:
 
@@ -171,7 +184,29 @@ Change `place holder` to your own actual Windows username in the four lines abov
 Get-StartApps | Where-Object {$_.Name -like "*MSI Center*"}
 ```
 
-Copy the `AppID` value it prints out (yours will differ from mine) and paste it into `MSI_CENTER_APPID`, keeping the quote marks. If your install turns out to be a normal exe instead, swap that line for a plain path and change the launch call to a regular `Run()`, `toggle.log` will tell you if the AppID method fails.
+Copy the `AppID` value it prints out (yours will differ from mine) and paste it into `MSI_CENTER_APPID` in `config.ahk`, keeping the quote marks. If your install turns out to be a normal exe instead, swap that line for a plain path and change the launch call to a regular `Run()`, `toggle.log` will tell you if the AppID method fails.
+
+If a path is ever wrong or missing, the script now tells you exactly which one on launch instead of failing silently later, see [Troubleshooting](#troubleshooting).
+
+#### Feature toggles
+
+Don't use one of these tools? Since v1.4.0 you can switch a whole tool off in `config.ahk` instead of faking a path for it, the script skips that step entirely:
+
+```ahk
+ENABLE_THROTTLESTOP     := true   ; false = never touch ThrottleStop
+ENABLE_NVIDIA_INSPECTOR := true   ; false = never import a GPU driver profile
+ENABLE_AFTERBURNER      := true   ; false = never touch Afterburner
+ENABLE_MSI_CENTER       := true   ; false = never auto-launch MSI Center in Work mode
+```
+
+And if a tool's enabled but isn't already running, decide whether the script should launch it for you or just warn you and skip that step:
+
+```ahk
+AUTOLAUNCH_THROTTLESTOP := true   ; false = warn instead of launching ThrottleStop
+AUTOLAUNCH_AFTERBURNER  := true   ; false = warn instead of launching Afterburner in Work mode
+```
+
+With `AUTOLAUNCH_THROTTLESTOP := true`, the script keeps ThrottleStop running for you on its own, so the separate `ThrottleStopAutoStart` task in Step 6 becomes optional, nice to have if you want it already open at login, not required either way.
 
 ### 6. Autostart (Scheduled Tasks)
 
@@ -187,11 +222,12 @@ Both need: **Run with highest privileges**, trigger **At log on**, and **AC powe
 ### 7. Test
 
 1. Run both tasks manually from Task Scheduler (no reboot needed).
-2. Task Manager → Details tab → confirm both show `Elevated = Yes`.
+2. Task Manager → Details tab → confirm both show `Elevated = Yes`. If you forgot this step, the script now warns you up front ("This script is not running as Administrator") instead of quietly failing to switch later.
 3. Tap the Copilot key → popup switches Game/Perf instantly, no UAC.
 4. Hold 1 second → WORK popup appears *before* the 60Hz flicker, MSI Center opens, sound mutes.
 5. Tap again from Work → back to Game, unmuted, 144Hz restored.
-6. Check `toggle.log`, an empty or missing file is a good sign, it only writes when something actually fails.
+6. Right-click the tray icon (near the clock, click the `^` arrow if hidden) → try Force Game/Perf/Work manually, this is the fallback if the physical key ever misbehaves.
+7. Check `toggle.log`, an empty or missing file is a good sign, it only writes when something actually fails.
 
 ---
 
@@ -232,7 +268,7 @@ If you want Afterburner active during Game/Perf too, just open it yourself once,
 
 ## Logging
 
-`toggle.log` only writes a line when something actually **fails** (a launch, the refresh-rate change, etc), not on every successful switch, so an empty or short log is a good sign, not a broken one. It auto-rotates to `toggle.log.old` once it passes about 500KB, so it won't grow forever.
+`toggle.log` only writes a line when something actually **fails** (a launch, the refresh-rate change, etc), not on every successful switch, so an empty or short log is a good sign, not a broken one. It auto-rotates to `toggle.log.old` once it passes about 500KB, so it won't grow forever. Every line is timestamped and tagged with the script version, so it's easy to tell exactly what happened and when.
 
 ---
 
@@ -240,7 +276,10 @@ If you want Afterburner active during Game/Perf too, just open it yourself once,
 
 | Symptom | Likely cause |
 |---|---|
-| Popup shows but profile doesn't change | ThrottleStop hotkeys don't match the script exactly, check digit, NUMPAD tick, NumLock |
+| Popup shows but profile doesn't change | ThrottleStop hotkeys don't match `config.ahk` exactly, check digit, NUMPAD tick, NumLock |
+| Popup says "config.ahk still has 'place holder' in one or more paths" | The first-run wizard got skipped or cancelled, restart the script to see it again, or set `WIN_USERNAME` in `config.ahk` yourself |
+| Popup says "This path doesn't seem to exist" | `WIN_USERNAME` / `APPS_FOLDER_NAME` don't match reality, or you simply don't have that tool, flip its `ENABLE_*` toggle to `false` instead |
+| Popup says "This script is not running as Administrator" | ThrottleStop, NVIDIA Profile Inspector, and Afterburner all need elevation to apply changes, redo the Scheduled Tasks or right-click → Run as administrator |
 | Windows security prompt on switch | Script or ThrottleStop isn't running elevated, redo the Scheduled Tasks |
 | Nothing happens on key press | MSI Center may be grabbing the Copilot/AI key itself, check its settings |
 | Screen doesn't drop to 60Hz | Can vary by display driver, other actions (CPU/GPU/mute/MSI Center) still work |
@@ -256,7 +295,7 @@ If you want Afterburner active during Game/Perf too, just open it yourself once,
 - MSI Center's launch method is tied to a specific AppID, might need re-finding on your machine after an update (see Step 5).
 - The Copilot key's exact signal (`Shift+Win+F23`) is what my firmware sends, could differ on other units or Windows versions.
 - Not fully fool-proofed against every laptop configuration, built and tested on one B12UC (mine).
-- No tray icon or GUI, no battery-percentage-aware auto-switching, both deliberately out of scope for now.
+- No battery-percentage-aware auto-switching, deliberately out of scope for now (the tray icon manual override did land in v1.4.0, see [What it does](#what-it-does)).
 - Other bugs i don't know about yet.
 
 ---
@@ -266,6 +305,7 @@ If you want Afterburner active during Game/Perf too, just open it yourself once,
 - `ts_profile_state.txt` remembers the last mode across reboots, don't delete it.
 - `toggle.log` is error-only now and auto-rotates, see [Logging](#logging).
 - If MSI Center ever updates and its AppID changes, re-run the PowerShell command from Step 5 to get the new one.
+- v1.4.0 added the first-run setup wizard, the tray icon menu, per-tool `ENABLE_*`/`AUTOLAUNCH_*` toggles, and the elevation warning, plus fixed a handful of bugs (long-press could hang forever, double-tap could stack two toast popups, state/config file corruption on a failed write, and a fragile refresh-rate switch). Full list in `CHANGELOG.md`.
 - Heads up, not everything here has been fully fool-proofed, a few edge cases might still be unchecked. If something's off, open an issue or fix it yourself.
 - If you'd rather not get into the weeds, hand this repo (script + README) to Claude or another AI assistant and ask it to walk you through setup, or to modify it for your own laptop.
 
@@ -290,6 +330,6 @@ Tuned alongside a phase-change thermal pad, results will differ with stock therm
 
 ## Disclaimer
 
-This is a solo hobby project, tuned on one person's own (slightly modified) MSI 15 B12UC, not a lab benchmark, not vendor-tested, no guarantees for your exact unit. Again, all config paths use the literal placeholder text `place holder`, Ctrl+F it and swap in your own Windows username wherever it appears. Feel free to modify anything to fit your setup, with or without AI help (i did use ai since i'm all alone on this, and yeah yeah ai coding but at least it works no?). Issues, PRs, and forks welcome, this was built for fun and to hopefully save someone else the trial and error.
+This is a solo hobby project, tuned on one person's own (slightly modified) MSI 15 B12UC, not a lab benchmark, not vendor-tested, no guarantees for your exact unit. Again, all user-specific config values use the literal placeholder text `place holder`, Ctrl+F it in `config.ahk` and swap in your own Windows username wherever it appears, or just let the first-run wizard do it for you. Feel free to modify anything to fit your setup, with or without AI help (i did use ai since i'm all alone on this, and yeah yeah ai coding but at least it works no?). Issues, PRs, and forks welcome, this was built for fun and to hopefully save someone else the trial and error.
 
 Licensed under MIT, forking and personal use welcome, resale isn't.
