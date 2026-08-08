@@ -1,533 +1,274 @@
-============================================================
- COPILOT KEY TOGGLE -- COMPLETE BEGINNER SETUP GUIDE (v1.3)
-============================================================
+COPILOT KEY -> THROTTLESTOP / GPU / REFRESH RATE TOGGLE
+=========================================================
+
+Turns the dedicated Copilot key on your keyboard into a physical switch
+for your laptop's performance mode, no Windows Copilot popup, just
+instant profile switching.
+
+Built for one specific laptop (MSI 15 B12UC) by one person, for their
+own use, shared as-is. It'll very likely need small tweaks (paths,
+hotkeys, display target) to work on a different machine. This guide
+walks you through all of them.
+
+WHAT IT DOES
+------------
+- Tap the Copilot key              : toggles between Game and Perf mode
+- Hold the Copilot key for 1 second: switches to Work mode
+- Ctrl+Alt+F9                      : pause/resume the whole script
+- Right-click the tray icon        : manually force Game / Perf / Work,
+                                      in case the key ever misbehaves
+
+  Game  - Full turbo, max GPU clocks, native refresh rate (144Hz), sound on
+  Perf  - Turbo off but still "optimal" GPU settings, native refresh rate,
+          sound on
+  Work  - Downclocked CPU, GPU dialed back, 60Hz, sound muted, Energy
+          Saver on, opens MSI Center
+
+
+1. WHAT YOU'LL NEED
+--------------------
+
+You don't need all of these. Every tool can be switched off in
+config.ahk if you don't use it. But for the full experience:
+
+  AutoHotkey v2
+    Runs the script itself. Required.
+    https://www.autohotkey.com/download/
+
+  ThrottleStop
+    CPU power/clock profile switching.
+    https://www.techpowerup.com/download/techpowerup-throttlestop/
+
+  NVIDIA Profile Inspector
+    Imports GPU driver profiles per mode (NVIDIA GPUs only).
+    https://github.com/Orbmu2k/nvidiaProfileInspector/releases
+
+  MSI Afterburner (optional)
+    GPU clock offsets.
+    https://www.msi.com/Landing/afterburner/graphics-cards
+    or https://www.guru3d.com/download/msi-afterburner-beta-download/
+    (the two only official sources)
+
+  MSI Center (optional, MSI laptops only)
+    Auto-opens in Work mode.
+    Microsoft Store, or https://www.msi.com/Landing/MSI-Center
+
+Grab the two script files too:
+  - CopilotThrottleStopToggle.ahk
+  - config.ahk
+
+They must sit in the same folder, and config.ahk is the only file you
+should ever need to edit.
+
+
+2. INSTALL THE TOOLS
+---------------------
+
+1. Install AutoHotkey v2 (run the installer, keep the default options).
+2. Install ThrottleStop (it doesn't have a real installer, it's a
+   folder you unzip). A tidy spot is something like
+   C:\Users\<you>\app\ThrottleStop\ , just remember the path, you'll
+   need it in a minute.
+3. Install NVIDIA Profile Inspector (skip if you're not on NVIDIA),
+   just a folder to unzip, e.g. C:\Users\<you>\app\nvidiaprofileinspec\ .
+4. Install MSI Afterburner if you want GPU clock offsets tied to your
+   modes (this one has a real installer).
+5. Install MSI Center from the Microsoft Store if you want it to pop
+   up automatically in Work mode.
+
+
+3. SET UP THROTTLESTOP PROFILES
+---------------------------------
+
+The script doesn't configure ThrottleStop for you. It just presses
+whatever hotkey you tell it to, and trusts that hotkey is already
+wired to a ThrottleStop profile with the settings you want.
+
+1. Open ThrottleStop as Administrator.
+2. Find its hotkey / profile-switching settings (usually under the
+   Options button, the exact spot has moved around between
+   ThrottleStop versions, so check the on-screen help "?" if you
+   don't spot it right away).
+3. Set up (at minimum) three profile slots with the CPU behavior you
+   want for Game / Perf / Work, and assign each one a keyboard
+   shortcut:
+     Perf profile -> Ctrl+Alt+Numpad2
+     Game profile -> Ctrl+Alt+Numpad1
+     Work profile -> Ctrl+Alt+Numpad3
+
+These three key combos are what config.ahk sends by default
+(HK_PERF, HK_GAME, HK_WORK). If you'd rather use different keys,
+that's fine, just make sure config.ahk matches whatever you actually
+assigned inside ThrottleStop.
 
-This guide assumes you are starting from a brand new / freshly reset
-Windows install on an MSI 15 B12UC or not, and have never done any of this
-before. Follow it top to bottom, in order. Don't skip steps.
 
--small long note- 
+4. SET UP NVIDIA PROFILE INSPECTOR (OPTIONAL)
+------------------------------------------------
 
-important : to modify any of the config file from my folder just search "place holder" and put your user name, -if- you took the path of making the "app folder"(see below it will make sense)
+If you use it, you'll need two .nip profile files:
+  - global_profile_game.nip
+  - global_profile_perf.nip
 
-heads up i did not fool proof everything, tried but i think i left some files unchecked. Also if you are to lazy to modify or get in the mud, just give everything to claude, read a bit of this txt or the quick start one to understand how it works. After give it what what's needed to claude to understand and modify, as myself a lazy men a lot of thing here were made by the goat claude, yeah yeah ai coding, but at least it worked really well FOR ME (dropped for 70°c idling to 52°c with perf mode)*
+Open NVIDIA Profile Inspector, configure the global driver settings
+you want for each mode, then use its export function to save them
+under those names in the same folder as the .exe (e.g.
+C:\Users\<you>\app\nvidiaprofileinspec\).
 
-* made a custom fan curve in msi center still in PROGRESS and testing with the modes, but good result (if you use phase changing thermal pad)  1: 0%,  2: 25%,  3: 38%,  4: 44%,  5: 60%,  6: 150% *
-(custom made for me, and decibel to temp ratio (still for my liking)i don't say that this is the best fan curve just putting a base line with this project)
 
-also, first time actually using github for me so bear with anything that looks off structurally. and honestly you don't need to follow this guide 100%, paths, which app opens in which mode, refresh rates, muting the speakers, change whatever fits your setup better than mine, this is just how i did it on my machine.
+5. DROP THE SCRIPT FILES IN PLACE
+------------------------------------
 
-use at your own risk basically, this pokes at CPU/GPU power behavior and display settings through a bunch of different tools, i'm not responsible for what happens on your specific hardware/software combo, test each piece by hand before trusting the automation.
+Put CopilotThrottleStopToggle.ahk and config.ahk together in one
+folder, anywhere you like, e.g. C:\Users\<you>\app\CopilotToggle\ .
 
 
+6. FIRST RUN
+-------------
 
-WHAT THIS PROJECT DOES, IN PLAIN WORDS:
+1. Right-click CopilotThrottleStopToggle.ahk -> Run as administrator.
+   (It needs admin rights to talk to ThrottleStop and the GPU driver,
+   see step 8 for why.)
+2. A small popup will ask for your Windows username and the folder
+   name your tools live in (pre-filled with sensible guesses). Confirm
+   or edit, and it saves your answer straight into config.ahk, you
+   won't be asked again.
+3. If a path doesn't exist, you'll get a popup telling you exactly
+   which one. Fix the path in config.ahk, or if you simply don't have
+   that tool, set its ENABLE_* toggle to false instead.
 
-Your laptop has a "Copilot" key on the keyboard that normally just
-opens the Windows Copilot app. This project reprograms that key so
-instead it switches your laptop between 3 power/performance modes:
 
-  GAME  - full power, fans can spin up, best for gaming
-  PERF  - CPU turbo off, quieter/cooler, still full 144Hz screen
-  WORK  - CPU downclocked, screen dropped to 60Hz, speakers muted,
-          GPU clocks pulled back too, Windows Energy Saver forced on,
-          MSI Center opens automatically -- meant for office work / browsing
+7. TRY IT OUT
+---------------
 
-  TAP the Copilot key once   -> switches between GAME and PERF
-  HOLD the Copilot key for a full second -> jumps to WORK mode
+- Tap the Copilot key -> you should see a small on-screen popup switch
+  between "GAME MODE" and "PERF MODE."
+- Hold the Copilot key for about a second -> "WORK MODE" popup, screen
+  may briefly flicker as the refresh rate drops to 60Hz.
+- Right-click the tray icon (look for it near the clock, click the
+  little "^" arrow to show hidden icons if needed) to force a mode
+  manually.
+- Ctrl+Alt+F9 pauses or resumes the whole script.
 
-A small popup box appears in the corner of your screen every time you
-switch, telling you which mode you're now in.
 
-This is done with 4 pieces of software working together:
-  1. AutoHotkey  -- runs the actual script that listens for the key
-  2. ThrottleStop -- controls the CPU (turbo on/off, downclocking)
-  3. NVIDIA Profile Inspector -- controls the GPU's power behaviour
-  4. MSI Afterburner -- pulls back the GPU's actual clock speed in Work mode
+8. MAKE IT START AUTOMATICALLY, ELEVATED (RECOMMENDED)
+----------------------------------------------------------
 
+Running the .ahk file directly means you have to remember to "Run as
+administrator" every time, and it won't survive a reboot. A
+Scheduled Task fixes both:
 
-------------------------------------------------------------
-STEP 1 -- INSTALL THE REQUIRED PROGRAMS
-------------------------------------------------------------
+1. Press Win+R, type taskschd.msc, hit Enter.
+2. In the right-hand panel, click "Create Task..." (not "Create Basic
+   Task", you need the extra options).
+3. General tab: Name it something like "Copilot Toggle". Check
+   "Run with highest privileges."
+4. Triggers tab: Click "New..." -> Begin the task: "At log on" -> OK.
+5. Actions tab: Click "New..." -> Action: "Start a program".
+     Program/script: the AutoHotkey v2 executable, typically
+       C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe
+     Add arguments: the full path to your script, in quotes, e.g.
+       "C:\Users\you\app\CopilotToggle\CopilotThrottleStopToggle.ahk"
+6. Conditions tab: if this is a laptop, uncheck "Start the task only
+   if the computer is on AC power" so it also runs on battery.
+7. Click OK, enter your Windows password if prompted.
 
-Install these one at a time, in this order.
+Now it'll launch elevated, automatically, every time you log in.
 
-  1a. AutoHotkey v2
-      Go to: https://www.autohotkey.com/
-      Click Download, then run the installer.
-      During install, nothing special to pick -- default options are fine.
-      This installs the "engine" that runs our script.
-
-  1b. ThrottleStop
-      Go to: https://www.techpowerup.com/download/techpowerup-throttlestop/
-      Download the zip file. This program does NOT have an installer --
-      you just extract the zip somewhere and run the exe directly from
-      inside that folder.
-      Extract it to: C:\Users\<your username>\app\
-      (so you end up with C:\Users\<you>\app\ThrottleStop.exe)
-
-  1c. NVIDIA Profile Inspector
-      Go to: https://github.com/Orbmu2k/nvidiaProfileInspector
-      Click "Releases" on the right side of the page, download the
-      newest zip, and extract it.
-      Extract it to: C:\Users\<you>\app\nvidiaprofileinspec\
-      (so you end up with
-       C:\Users\<you>\app\nvidiaprofileinspec\nvidiaProfileInspector.exe)
-      This also has no installer, it's a single portable program.
-
-  1d. MSI Center
-      Check your Start Menu first -- MSI laptops usually come with
-      this already installed. If it's missing, search "MSI Center"
-      on MSI's official support site for your model and install it.
-
-  1e. MSI Afterburner (REQUIRED now -- used for the GPU core/memory
-      clock offset in Work mode. It only auto-launches when you
-      switch to Work mode though, it won't pop open uninvited during
-      Game/Perf switches if you keep it closed.)
-      Go to: https://www.msi.com/Landing/afterburner/graphics-cards
-      This one DOES have a normal installer, just run it and follow
-      the prompts.
-
-  DO NOT install "NirCmd" -- an earlier version of this project used
-  it, but it's not needed anymore and an virustotal scan flagged it
-  as suspicious. The current script doesn't use it at all.
-
-
-------------------------------------------------------------
-STEP 2 -- CREATE YOUR FOLDER
-------------------------------------------------------------
-
-Open File Explorer and create this folder if it doesn't already exist (can be named anything or put anywhere, but every file is configured on my own path, you can modify anything):
-
-  C:\Users\<your username>\app\
-
-This is where everything lives. By the end of this guide it should contain:
-
-  C:\Users\<you>\app\
-    CopilotThrottleStopToggle.ahk     (the script -- save it here)
-    ThrottleStop.exe                  (from step 1b)
-    (ThrottleStop's other files)
-    ThrottleStop.ini                  (created automatically once you
-                                        save settings inside ThrottleStop)
-    nvidiaprofileinspec\
-      nvidiaProfileInspector.exe      (from step 1c)
-      global_profile_game.nip         (you will create this in step 4)
-      global_profile_perf.nip         (you will create this in step 4)
-
-Save the CopilotThrottleStopToggle.ahk file (provided separately)
-directly into this app folder now.
-
-
-------------------------------------------------------------
-STEP 3 -- SET UP THROTTLESTOP PROFILES (from scratch)
-------------------------------------------------------------
-
-ThrottleStop lets you save up to 8 "profiles" -- basically saved CPU
-setting presets you can jump between. We're using 3 of them.
-
-  3a. Open ThrottleStop.exe. If Windows shows a "clock disabled"
-      warning popup on first run, just click OK -- this is normal.
-
-  3b. You'll see a main window with a row of numbered buttons near
-      the bottom-left, usually labelled 1 through 8, plus a bunch of
-      checkboxes (Disable Turbo, SpeedStep, C1E, etc.) and sliders.
-      These numbered buttons are your profile slots.
-
-  3c. SET UP PROFILE 1 = PERFORMANCE
-      - Click the "1" button to select that slot.
-      - Check the box labeled "Disable Turbo" (this stops the CPU
-        boosting above base clock -- cooler, quieter).
-      - Leave other boxes at their defaults for now.
-      - Click "Save" (bottom right area of the window) so this
-        profile sticks.
-      - (optional) Set Speed Shift EPP to a middle value like 128
-        ("balanced") instead of 0, so the CPU doesn't chase max clock
-        even with Turbo already off.
-
-  3d. SET UP PROFILE 2 = GAME
-      - Click the "2" button.
-      - Make sure "Disable Turbo" is UNCHECKED here (you want full
-        boost while gaming).
-      - Click "Save".
-
-  3e. SET UP PROFILE 4 = WORK / BATTERY
-      - Click the "4" button.
-      - Check "Disable Turbo", "SpeedStep", and "C1E".
-      - Also check "Power Saver" if you see it, and set Speed Shift
-        EPP toward 255 -- this forces the CPU to its lowest gear,
-        best for light tasks like browsing or office work.
-      - Click "Save".
-
-  3f. ASSIGN HOTKEYS TO EACH PROFILE
-      - Go to the "Options" menu at the top, choose "Hotkeys".
-      - You'll see rows for each profile number, each with a set of
-        checkboxes (CTRL, ALT, SHIFT, WIN, NUMPAD) and a dropdown or
-        box to pick a digit.
-      - For Profile 1: tick CTRL, ALT, and NUMPAD, and set the digit
-        to 2. This means "Ctrl+Alt+Numpad2" switches to Profile 1.
-      - For Profile 2: tick CTRL, ALT, NUMPAD, digit = 1
-        ("Ctrl+Alt+Numpad1").
-      - For Profile 4: tick CTRL, ALT, NUMPAD, digit = 3
-        ("Ctrl+Alt+Numpad3").
-      - Make sure the "Enable Hotkeys" checkbox (usually near the top
-        of this window) is ticked, or none of this will work.
-      - Click OK / Save to close this window.
-
-  IMPORTANT: Keep NumLock turned ON on your keyboard. The Numpad
-  hotkeys can misbehave if NumLock is off.
-
-  These three combinations (Ctrl+Alt+Numpad2, Numpad1, Numpad3) are
-  exactly what the script will "press" automatically for you later --
-  you don't need to remember them, just make sure they're set up
-  exactly like this so the script's automatic key-presses land on the
-  right profile.
-
-  Once everything above is done and saved, ThrottleStop will have
-  created a file called ThrottleStop.ini in the same folder as
-  ThrottleStop.exe -- that file is what remembers all these settings.
-  If you ever reinstall Windows again, you can just copy that one
-  .ini file back into the folder instead of redoing steps 3a-3f.
-
-
-  --- WHAT EACH SETTING ABOVE ACTUALLY DOES ---
-
-  Quick disclaimer: I (the person who set this up) haven't dug into
-  the CPU internals myself -- this is a summary of what these
-  settings are commonly documented to do, gathered from ThrottleStop
-  guides online. Treat it as "why this probably works", not gospel.
-
-  Disable Turbo
-    Stops the CPU from boosting above its base clock. Turbo is what
-    lets a CPU spike way above its normal speed for short bursts --
-    great for gaming, but it's also the main reason a laptop gets
-    hot and loud. Turning it off caps you at base clock permanently.
-
-  SpeedStep
-    An older Intel mechanism (largely superseded by "Speed Shift" on
-    newer CPUs) that lets Windows scale the CPU's clock speed up and
-    down based on load, at the software level. Usually best left on
-    -- disabling it can lock the CPU at a fixed frequency/voltage,
-    which isn't necessarily lower, just less flexible.
-
-  C1E
-    Controls whether the CPU is allowed to drop into a deeper idle
-    state when there's nothing to do. Leaving it ON generally means
-    better idle efficiency and lower idle temps. Turning it OFF
-    keeps clocks "ready" at all times at the cost of higher idle
-    power draw -- mainly useful for latency-sensitive work, not
-    something you'd usually want in a "quiet/cool" profile, but we
-    use it here mainly to reinforce that Work mode should never
-    randomly spike.
-
-  Power Saver (checkbox, not the Windows power plan)
-    Forces the CPU toward its lowest available multiplier/gear
-    instead of letting it pick dynamically. This is the setting
-    doing most of the heavy lifting for how low Work mode's clock
-    speed goes.
-
-  Speed Shift EPP (0-255 slider)
-    A newer, hardware-level version of SpeedStep. 0 means "prefer
-    maximum frequency" (closest to Turbo behaviour even with Turbo
-    off), 255 means "prefer minimum frequency / most efficient".
-    Low values (0-32) suit a Perf-but-still-responsive profile;
-    high values (128-255) suit a low-power Work profile.
-
-
-  --- WHAT I ACTUALLY MEASURED (my B12UC, your numbers may differ) ---
-
-  These are real numbers off my own machine, watched live in
-  ThrottleStop's monitoring panel, task manager and a bit of msi afterburener(no relevant data found) -- not manufacturer specs, and not
-  independently verified beyond "this is what I saw happen":
-
-  GAME (Turbo ON)
-    Sat around 2.20 GHz with light load, but jumped up to 3.8 GHz 
-    once more programs/load were active -- this is Turbo doing its (can go beyond 3.8 i think i Elden ring i got close to 4.2ghz)
-    job, ramping up only when something actually demands it.
-
-  PERF (Turbo OFF)
-    Held steady around 1.5/1.1 GHz with just Brave open and nothing else
-    heavy running.
-
-  WORK (Turbo OFF + Power Saver)
-    Dropped to about 1 GHz, sometimes as low as 0.60 GHz.
-
-  These numbers are specific to my CPU, my BIOS and modified ssd ram ect,
-  and what was running at the time -- yours will land somewhere in the same
-  general shape (Game > Perf > Work) but don't expect identical
-  figures. If you want to check your own, ThrottleStop's main window
-  shows live clock speed per core while a profile is active and task manager.
-
-
-------------------------------------------------------------
-STEP 4 -- SET UP THE NVIDIA GPU PROFILES (from scratch)
-------------------------------------------------------------
-
-This controls whether your NVIDIA GPU stays "boosted" or idles down
-to save power -- it's a legitimate NVIDIA driver setting, we're just
-making it switchable with one click instead of digging through menus.
-
-  4a. Open nvidiaProfileInspector.exe (from the nvidiaprofileinspec
-      folder). You may need to right-click -> Run as administrator.
-
-  4b. At the top, there's a dropdown for choosing which "profile" you
-      are editing. Leave it on "Base Profile" (this is the global
-      default that applies everywhere unless a game has its own
-      override).
-
-  4c. In the long list of settings below, find the section called
-      "0x1 - Common", and inside it find "Power Management Mode".
-
-  4d. CREATE THE GAME VERSION:
-      - Set "Power Management Mode" to "Prefer Maximum Performance".
-      - Click the small floppy-disk / save icon near the top
-        (labeled something like "Apply changes") to save it into
-        your NVIDIA driver.
-      - Now go to File (or the top toolbar) and look for an option
-        like "Export Customized Settings" -- or just close and reopen
-        the program and use the -exportCustomized command explained
-        below. The simplest way:
-          - Close the program.
-          - Open a Command Prompt (search "cmd" in the Start Menu).
-          - Type: cd C:\Users\<you>\app\nvidiaprofileinspec
-          - Press Enter.
-          - Type: nvidiaProfileInspector.exe -exportCustomized
-          - Press Enter. This creates a new file with a long
-            timestamp-style name in that same folder. 
-          - Find that new file in File Explorer, and rename it to:
-            global_profile_game.nip
-
-  4e. CREATE THE PERF/WORK VERSION:
-      - Reopen nvidiaProfileInspector.exe.
-      - Change "Power Management Mode" back to "Optimal Power".
-      - Click the save/apply icon again.
-      - Repeat the same export steps as above (close it, use the
-        same -exportCustomized command in Command Prompt), and rename
-        the newly created file to:
-            global_profile_perf.nip
-
-  You should now have both files sitting in:
-    C:\Users\<you>\app\nvidiaprofileinspec\global_profile_game.nip
-    C:\Users\<you>\app\nvidiaprofileinspec\global_profile_perf.nip
-
-  These two small files are what the script silently "imports" every
-  time you switch modes -- that's what actually flips the GPU setting
-  without you having to open the program each time.
-
-
-------------------------------------------------------------
-STEP 4B -- SET UP MSI AFTERBURNER GPU CLOCK PROFILES
-------------------------------------------------------------
-
-This one's required now too (wasn't when this project first started,
-but Work mode uses it to actually pull the GPU clocks down).
-
-  1. Open MSI Afterburner.
-  2. Try dragging the Core (MHz) slider a little. If it actually
-     moves and you can click the green checkmark to Apply, good,
-     you have control over this. (Voltage and Power Limit are
-     usually locked by MSI on laptops, that's normal, ignore those,
-     we only need Core/Memory to work.)
-  3. With both Core and Memory sliders at +0 (default), click User
-     Profile "1" (top right area), then click Save. This is your
-     Game/Perf profile, full clocks.
-  4. Now drag Core (MHz) down to around -300. Don't go more
-     aggressive than that on your first try, bigger negative numbers
-     risk a driver crash if the GPU gets pushed hard while capped.
-     Click Apply, then go play something demanding for a few minutes
-     to make sure it's stable (a quiet menu screen won't tell you
-     anything, actual gameplay will).
-  5. If that was stable, click User Profile "2", then Save. This is
-     your Work profile, downclocked.
-
-  Heads up: the script only auto-opens Afterburner when you switch
-  to Work mode. If you're in Game or Perf and Afterburner happens to
-  be closed, the script just skips it rather than popping it open on
-  every single tap, so don't be surprised if it doesn't launch just
-  from a quick Game/Perf toggle, that's intentional.
-
-
-------------------------------------------------------------
-STEP 5 -- EDIT THE SCRIPT'S PATHS
-------------------------------------------------------------
-
-Right-click CopilotThrottleStopToggle.ahk and choose "Edit Script"
-(or open it with Notepad). Near the top you'll see a block that looks
-like this:
-
-  TS_PATH   := "C:\Users\place holder\app\ThrottleStop.exe"
-  NVI_PATH  := "C:\Users\place holder\app\nvidiaprofileinspec\nvidiaProfileInspector.exe"
-  NIP_GAME  := "C:\Users\place holder\app\nvidiaprofileinspec\global_profile_game.nip"
-  NIP_PERF  := "C:\Users\place holder\app\nvidiaprofileinspec\global_profile_perf.nip"
-  AB_PATH   := "C:\Program Files (x86)\MSI Afterburner\MSIAfterburner.exe"
-  MSI_CENTER_APPID := "9426MICRO-STARINTERNATION.MSICenter_kzh8wxbdkxb8p!App"
-
-Change "place holder" to your own actual Windows username in the
-first four lines. To find your username: open File Explorer, your
-personal folder under "This PC > Local Disk (C:) > Users" shows it.
-
-For AB_PATH: right-click your Afterburner shortcut, "Open file
-location", copy the real path, it can vary by install.
-
-For MSI_CENTER_APPID: this one is NOT a normal file path. MSI Center
-is often installed as a packaged Windows app on newer machines
-(can't right-click it and "Open file location" like a normal exe).
-Open PowerShell and run:
-
-  Get-StartApps | Where-Object {$_.Name -like "*MSI Center*"}
-
-It'll print something like:
-  Name        AppID
-  ----        -----
-  MSI Center  MSIElectronic.MSICentre_xxxxxxxxxxxxx!App
-
-Copy the AppID value it gives you (yours will be different from the
-example above, that's normal) and paste it into MSI_CENTER_APPID,
-keeping the quote marks. If your MSI Center install turns out to be
-a normal exe instead, you can swap that whole line for a plain path
-and change the launch code to a regular Run() call, check toggle.log
-if you're not sure which case you're in, a failed launch attempt
-gets logged there either way.
-
-Save the file when done (Ctrl + S), then close Notepad.
-
-
-------------------------------------------------------------
-STEP 6 -- MAKE THE SCRIPT RUN AUTOMATICALLY AND SILENTLY
-------------------------------------------------------------
-
-We want ThrottleStop and the script to both start automatically every
-time you log into Windows, running with admin rights, without a
-popup asking you to approve it each time. Windows' "Task Scheduler"
-does this.
-
-  6a. Open Task Scheduler (search for it in the Start Menu).
-
-  6b. On the right-hand side, click "Create Task..." (NOT "Create
-      Basic Task" -- that simpler wizard doesn't have the option we need).
-
-  6c. FIRST TASK -- for ThrottleStop:
-      - General tab: Name it "ThrottleStopAutoStart".
-        Tick the box "Run with highest privileges".
-      - Triggers tab: click New. Set "Begin the task" to "At log on".
-        Choose "Specific user" and make sure it's your account.
-        Click OK.
-      - Actions tab: click New. In "Program/script", click Browse and
-        select your ThrottleStop.exe. In "Start in (optional)", enter
-        the folder it's in (e.g. C:\Users\<you>\app\). Click OK.
-      - Conditions tab: UNTICK "Start the task only if the computer
-        is on AC power" (important for a laptop).
-      - Settings tab: tick "Allow task to be run on demand".
-      - Click OK to save. Windows may ask for your account password
-        once -- enter it, this lets the task run silently later.
-
-  6d. SECOND TASK -- for the script:
-      - Repeat the same steps, but name it "CopilotToggleAutoStart".
-      - Actions tab -> New:
-          Program/script: browse to
-            C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe
-          Add arguments (optional): type exactly (with quotes):
-            "C:\Users\<you>\app\CopilotThrottleStopToggle.ahk"
-          Start in (optional):
-            C:\Users\<you>\app\
-      - Everything else (highest privileges, at log on, AC power
-        unchecked) is the same as the first task.
-
-  You now have two tasks that will silently start both programs,
-  fully admin-elevated, every time you log in -- no clicking, no
-  popups.
-
-
-------------------------------------------------------------
-STEP 7 -- TEST EVERYTHING
-------------------------------------------------------------
-
-You don't have to restart your PC to test -- do this instead:
-
-  7a. In Task Scheduler, find "ThrottleStopAutoStart" in the list,
-      right-click it, choose "Run".
-  7b. Do the same for "CopilotToggleAutoStart".
-  7c. Open Task Manager (Ctrl+Shift+Esc), go to the "Details" tab.
-      Right-click any column header, choose "Select columns", and
-      tick "Elevated". Find ThrottleStop.exe and AutoHotkey64.exe in
-      the list -- both should now show "Yes" under Elevated.
-  7d. Tap the Copilot key once. You should see a small popup appear
-      in the top-right corner saying GAME MODE or PERF MODE, with no
-      Windows security popup interrupting you.
-  7e. Hold the Copilot key down for a full second (count "one
-      one-thousand"). You should see the WORK MODE popup appear
-      BEFORE the screen flickers to 60Hz, MSI Center should open on
-      its own, and your speakers should go silent.
-  7f. Tap the Copilot key again while in Work mode -- it should jump
-      back to Game mode, unmute your sound, and restore the normal
-      144Hz screen.
-
-If all of that worked, you're done -- log off and back on once just
-to confirm it still all starts up cleanly on its own.
-
-
-------------------------------------------------------------
-TROUBLESHOOTING
-------------------------------------------------------------
-
-- Popup shows but the profile doesn't actually change:
-  Double check the ThrottleStop hotkeys in step 3f match exactly --
-  wrong digit, missing NUMPAD tick, or NumLock being off are the
-  most common causes.
-
-- A Windows security prompt appears when switching modes:
-  This means the script or ThrottleStop isn't running elevated.
-  Redo step 6, especially "Run with highest privileges", and make
-  sure you entered your password when prompted while saving the task.
-
-- Nothing happens at all when pressing the Copilot key:
-  Some MSI models have MSI Center itself grabbing that key. Open
-  MSI Center's settings and look for anything bound to the Copilot
-  key or "AI key", and disable it there.
-
-- Screen doesn't actually change to 60Hz in Work mode:
-  This can vary slightly by display driver. Not a sign anything else
-  is broken -- everything else (CPU/GPU/mute/MSI Center) will still
-  work correctly.
-
-- Afterburner clocks don't seem to change in Game/Perf:
-  That's expected now if Afterburner was closed, it only auto-opens
-  for Work mode, Game/Perf will only apply the clock offset if
-  Afterburner's already running. Open it yourself first if you want
-  it active during Game/Perf too.
-
-- Energy Saver doesn't seem to turn on in Work mode:
-  Known limitation, it reliably works while on battery but hasn't
-  been confirmed working the same way while plugged into AC power.
-  See the Known Issues section in README.md for details.
-
-
-------------------------------------------------------------
-NOTES FOR LATER
-------------------------------------------------------------
-
-- ts_profile_state.txt appears automatically next to the script once
-  you use it for the first time -- it just remembers which mode you
-  were last in, so the popup stays accurate even after a restart.
-  Don't delete it.
-
-- toggle.log also appears automatically. It only writes a line when
-  something actually FAILS (a launch, the refresh rate change, etc),
-  not on every switch, so an empty or short log is a good sign. It
-  auto-rotates to toggle.log.old once it passes about 500KB, so it
-  won't grow forever.
-
-- MSI Afterburner is connected now. It only auto-launches in Work
-  mode though, Game/Perf switches will apply the offset if
-  Afterburner's already running, but won't pop it open if it's
-  closed.
-
-- If MSI Center ever updates and its AppID changes, re-run the
-  PowerShell command from step 5 to get the new one and update
-  MSI_CENTER_APPID in the script.
-
-- Don't feel locked into following every step exactly as written.
-  Paths, which apps launch in which mode, the refresh rates, whether
-  the speakers mute, all of that is just how I set mine up, change
-  whatever fits your own machine and habits.
-
-(keep in mind all of this is made by one person on their free time, made that for me but wanted to help other people with this laptop, if there is any problem with the project or something you want changed or updated tell me or you can try your self. it was really fun for me honestly)
+
+9. UNDERSTANDING CONFIG.AHK
+------------------------------
+
+  WIN_USERNAME / APPS_FOLDER_NAME
+    Builds the paths to ThrottleStop and NVIDIA Profile Inspector.
+    Set automatically by the first-run wizard.
+
+  AB_PATH
+    Path to MSIAfterburner.exe
+
+  HK_PERF / HK_GAME / HK_WORK
+    The keystrokes sent to trigger each ThrottleStop profile
+
+  AB_GAME / AB_WORK
+    Afterburner profile arguments (-profile1, -profile2, etc.)
+
+  MSI_CENTER_APPID
+    The packaged-app ID used to launch MSI Center in Work mode
+
+  REFRESH_NATIVE / REFRESH_WORK
+    Refresh rate (Hz) for Game/Perf vs. Work
+
+  TARGET_DISPLAY
+    Which display to change the refresh rate on (\\.\DISPLAY1 is
+    usually the built-in laptop screen)
+
+  LONGPRESS_SEC
+    How long you need to hold the key to trigger Work mode
+
+  DEBOUNCE_MS
+    Minimum gap between switches, to ignore accidental double-taps
+
+  ENABLE_THROTTLESTOP / ENABLE_NVIDIA_INSPECTOR / ENABLE_AFTERBURNER /
+  ENABLE_MSI_CENTER
+    Turn a whole tool on/off, the script skips it entirely if false
+
+  AUTOLAUNCH_THROTTLESTOP / AUTOLAUNCH_AFTERBURNER
+    If a tool isn't already running, should the script start it, or
+    just warn you?
+
+
+10. TROUBLESHOOTING
+----------------------
+
+"config.ahk still has 'place holder' in one or more paths"
+  The first-run wizard got skipped or cancelled. Either restart the
+  script to see the popup again, or open config.ahk and set
+  WIN_USERNAME yourself.
+
+"This path doesn't seem to exist"
+  Double-check WIN_USERNAME / APPS_FOLDER_NAME in config.ahk, and that
+  the tool is actually unzipped where you think it is. If you don't
+  have that tool installed at all, flip its ENABLE_* setting to false.
+
+"This script is not running as Administrator"
+  ThrottleStop, NVIDIA Profile Inspector, and Afterburner all need
+  elevation to apply changes. Without it, switching will silently
+  fail. Use the Scheduled Task method in step 8, or right-click ->
+  Run as administrator each time.
+
+The Copilot key still opens Windows Copilot instead of switching modes
+  Make sure the script is actually running (check the tray). If it
+  was recently paused with Ctrl+Alt+F9, resume it the same way.
+
+Refresh rate doesn't change, or changes the wrong screen
+  TARGET_DISPLAY in config.ahk may be pointing at the wrong monitor.
+  Try \\.\DISPLAY2 instead of \\.\DISPLAY1 (or check Windows Settings
+  -> System -> Display -> Identify to see how your displays are
+  numbered).
+
+Something else looks off
+  Check toggle.log in the same folder as the script. Every action and
+  warning gets a timestamped line there, including the script version,
+  which makes it easier to tell exactly what happened and when.
+
+
+11. UNINSTALLING / DISABLING
+-------------------------------
+
+- To stop it temporarily: Ctrl+Alt+F9, or right-click the tray icon ->
+  Exit.
+- To stop it permanently: remove the Scheduled Task from step 8 (or
+  just delete the script files if you never set one up).
+- Nothing this script does is permanent. It only flips existing
+  settings in ThrottleStop / the NVIDIA driver / Afterburner /
+  Windows display settings, all of which you can change back by hand
+  at any time.
+
+
+DISCLAIMER
+----------
+
+This was built for one specific laptop and one specific setup.
+Changing CPU voltage/clock limits and GPU driver profiles carries the
+same general risks as using ThrottleStop, NVIDIA Profile Inspector, or
+Afterburner on their own, use at your own risk, and keep an eye on
+temperatures if you're pushing performance settings higher than stock.
